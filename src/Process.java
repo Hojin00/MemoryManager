@@ -15,4 +15,5 @@ public class Process {
     int getSize() {
         return size;
     }
+
 }

@@ -9,4 +9,12 @@
 // requisicao de liberacao
 	// comando "OUT", com nome do processo "ID"
 	
+// import java.util.ArrayList;
 
+public static void main(String[] args) {
+
+	Process[] manager = MemoryManager(3);
+	FileReader reader = new FileReader();
+
+	// reader.read("test2.txt", manager); nao testado
+}
