@@ -5,7 +5,7 @@ public class FileReader {
   
     public void read(String filename, MemoryManager manager) {
         try {
-            File myObj = new File("test.txt");
+            File myObj = new File(filename);
             Scanner scanner = new Scanner(myObj);
             while (scanner.hasNextLine()) {
                 String data = scanner.nextLine();
