@@ -3,6 +3,8 @@ import java.util.ArrayList;
 public class MemoryManager {
 
     private ArrayList<Process> memory;
+    private int blocksize;
+    private boolean hasFixedSize = true;
     
     public MemoryManager(double size) {
         size = Math.pow(2, size);
