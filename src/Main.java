@@ -13,9 +13,9 @@
 public class Main {
 	public static void main(String[] args) {
 
-		Process[] manager = MemoryManager(3);
-		FileReader reader = new FileReader();
-
+		SO so = new SO();
+		so.execute();
 		// reader.read("test2.txt", manager); nao testado
 	}
+
 }

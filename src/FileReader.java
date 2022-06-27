@@ -1,36 +1,49 @@
-import java.io.File;  
-import java.io.FileNotFoundException;  
-import java.util.Scanner; 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.util.ArrayList;
+import java.util.Scanner;
+import java.util.regex.*;
+
 public class FileReader {
-  
+
     public void read(String filename, MemoryManager manager) {
         try {
-            File myObj = new File(filename);
+            ArrayList<Process> allCommands = new ArrayList<Process>(4);
+            ;
+            File myObj = new File("/Users/hojinryu/Desktop/PUCRS/sisop/T2/MemoryManager/src/test3.txt");
             Scanner scanner = new Scanner(myObj);
             while (scanner.hasNextLine()) {
                 String data = scanner.nextLine();
-                String[] parts = data.split("(");
+                String[] parts = data.split("\\(");
                 String[] values = parts[1].split(",");
-                values[1].replaceAll(".$", "");
-                if(parts[0].equals("IN")) {
-                    System.out.println("in");
-                    Process p = new Process(values[0], Integer.parseInt(values[1]));
+
+                if (parts[0].equals("IN")) {
+                    String value = values[1].replaceAll("\\)", "").trim();
+                    Process p = new Process(values[0], Integer.parseInt(value), "IN");
                     manager.addProcess(p);
-                } else if (parts[0].equals("OUT")){
-                    System.out.println("out");
-                    manager.removeProcess(values[0]);
+                    allCommands.add(p);
+                } else if (parts[0].equals("OUT")) {
+                    String value = values[0].replaceAll("\\)", "").trim();
+                    for (int i = 0; i < allCommands.size(); i++) {
+                        Process p = allCommands.get(i);
+                        if (p.getName().equals(value)) {
+                            Process aux = new Process(p.getName(), p.getSize(), "OUT");
+                            manager.addProcess(aux);
+                            allCommands.add(aux);
+                            break;
+                        }
+                    }
                 } else {
                     System.out.println("error");
                 }
                 System.out.println(data);
-                System.out.println(manager.toString());
-      }
-      scanner.close();
-    }   catch (FileNotFoundException e) {
+
+            }
+            scanner.close();
+        } catch (FileNotFoundException e) {
             System.out.println("An error occurred.");
             e.printStackTrace();
         }
     }
 
-  
 }
