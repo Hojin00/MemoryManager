@@ -2,7 +2,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Scanner;
-import java.util.regex.*;
 
 public class FileReader {
 
@@ -36,7 +35,6 @@ public class FileReader {
                 } else {
                     System.out.println("error");
                 }
-                System.out.println(data);
 
             }
             scanner.close();

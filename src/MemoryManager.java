@@ -3,14 +3,14 @@ import java.util.ArrayList;
 public class MemoryManager {
     private Memory memory;
     private ArrayList<Process> commands;
-    private int blocksize;
-    private boolean hasFixedSize = true;
+    private int totalPosc;
+    private int blockNumber;
+    private boolean hasFixedSize;
     private String worstBest = "";
 
     MemoryManager(int size) {
-        this.commands = new ArrayList<Process>((int) (size));
-        this.blocksize = size;
-        initFixedSizeMemory();
+
+        this.commands = new ArrayList<Process>(size);
     }
 
     public ArrayList<Process> getCommandsInfo() {
@@ -25,7 +25,15 @@ public class MemoryManager {
         commands.add(p);
     }
 
-    void sethasFixedSize(boolean hasFixedSize) {
+    void setTotalPosc(int n) {
+        this.totalPosc = n;
+    }
+
+    void setTotalBlock(int n) {
+        this.blockNumber = n;
+    }
+
+    void setHasFixedSize(boolean hasFixedSize) {
         this.hasFixedSize = hasFixedSize;
     }
 
@@ -34,26 +42,46 @@ public class MemoryManager {
     }
 
     void initFixedSizeMemory() {
-        this.memory = new Memory(blocksize);
-        int eachBlockSize = (int) Math.pow(2, blocksize) / blocksize;
-        for (int i = 0; i < blocksize; i++) {
-            Block b = new Block(eachBlockSize, "None", "Free");
-            memory.addBlocks(b);
+        if (isPowerOfTwo(totalPosc)) {
+            if (hasFixedSize) {
+
+                if (isDivisionZero(totalPosc, blockNumber) && isPowerOfTwo(totalPosc / blockNumber)) {
+                    int eachBlock = totalPosc / blockNumber;
+                    this.memory = new Memory(blockNumber);
+                    for (int i = 0; i < blockNumber; i++) {
+                        Block b = new Block(eachBlock, "None", "Free");
+                        memory.addBlocks(b);
+                    }
+                }
+            } else {
+                this.memory = new Memory(1);
+                Block b = new Block(totalPosc, "None", "Free");
+                memory.addBlocks(b);
+            }
         }
     }
 
+    boolean isPowerOfTwo(int x) {
+
+        return x != 0 && ((x & (x - 1)) == 0);
+
+    }
+
+    boolean isDivisionZero(int a, int b) {
+        return a % b == 0;
+    }
+
     public void manage() {
+        System.out.println("Tamanho inicial -> " + " | " + totalPosc + " |");
         if (hasFixedSize) { // contiguous allocation
-            System.out.println("Tamanho inicial -> " + " | 16 |");
             contiguousAllocation();
+        } else {
+            if (worstBest.equals("WorstFit")) {
+                worstFitAllocation();
+            } else {
+                bestFitAllocation();
+            }
         }
-        // else {
-        // if (worstBest.equals("WorstFit")) {
-        // worstFitAllocation();
-        // } else {
-        // bestFitAllocation();
-        // }
-        // }
     }
 
     public void contiguousAllocation() {
@@ -71,6 +99,9 @@ public class MemoryManager {
                             b.setName(c.getName());
                             b.setState();
                             break;
+                        } else {
+                            System.out.print("Nāo cabe na memória principal ");
+                            break;
                         }
                     }
                 }
@@ -84,8 +115,135 @@ public class MemoryManager {
                     } else {
                         if (!b.getName().equals(c.getName())) {
                             continue;
+
                         } else {
                             b.setAvailableSize(b.getAvailableSize() + c.getSize());
+                            b.setName("None");
+                            b.setState();
+                            break;
+                        }
+                    }
+                }
+                printFragmentations();
+            }
+        }
+    }
+
+    public void worstFitAllocation() {
+        for (int i = 0; i < commands.size(); i++) {
+            Process c = commands.get(i);
+
+            if (c.getState().equals("IN")) {
+
+                System.out.print("IN(" + c.getName() + "," + c.getSize() + ") -> ");
+
+                int best = 0;
+                int bestIndex = 0;
+                boolean found = false;
+                for (int j = 0; j < memory.partitions.size(); j++) {
+                    Block b = memory.partitions.get(j);
+
+                    if (b.getState().equals("Occupied")) {
+                        continue;
+                    } else {
+                        if (b.getAvailableSize() >= c.getSize() && b.getAvailableSize() > best) {
+                            best = b.getAvailableSize();
+                            bestIndex = j;
+                            found = true;
+                        } else {
+                            if (j == memory.partitions.size() - 1 && !found) {
+
+                                System.out.print("Nāo cabe na memória principal ");
+                            }
+                            continue;
+                        }
+                    }
+                }
+
+                Block b = memory.partitions.get(bestIndex);
+                Block newBlock = new Block(b.getAvailableSize() - c.getSize(), "None", "Free");
+                memory.addBlocks(newBlock);
+
+                b.setAvailableSize(0);
+                b.setName(c.getName());
+                b.setState();
+
+                printFragmentations();
+            } else {
+                System.out.print("OUT(" + c.getName() + ") -> ");
+                for (int j = 0; j < memory.partitions.size(); j++) {
+                    Block b = memory.partitions.get(j);
+                    if (b.getState().equals("Free")) {
+                        continue;
+                    } else {
+                        if (!b.getName().equals(c.getName())) {
+                            continue;
+
+                        } else {
+                            b.setAvailableSize(c.getSize());
+                            b.setName("None");
+                            b.setState();
+                            break;
+                        }
+                    }
+                }
+                printFragmentations();
+            }
+        }
+    }
+
+    public void bestFitAllocation() {
+        for (int i = 0; i < commands.size(); i++) {
+            Process c = commands.get(i);
+
+            if (c.getState().equals("IN")) {
+
+                System.out.print("IN(" + c.getName() + "," + c.getSize() + ") -> ");
+
+                int best = totalPosc;
+                int bestIndex = 0;
+                boolean found = false;
+                for (int j = 0; j < memory.partitions.size(); j++) {
+                    Block b = memory.partitions.get(j);
+
+                    if (b.getState().equals("Occupied")) {
+                        continue;
+                    } else {
+                        if (b.getAvailableSize() >= c.getSize() && b.getAvailableSize() <= best) {
+                            best = b.getAvailableSize() - c.getSize();
+                            bestIndex = j;
+                            found = true;
+                        } else {
+                            if (j == memory.partitions.size() - 1 && !found) {
+
+                                System.out.print("Nāo cabe na memória principal ");
+                            }
+                            continue;
+                        }
+                    }
+                }
+
+                Block b = memory.partitions.get(bestIndex);
+                Block newBlock = new Block(b.getAvailableSize() - c.getSize(), "None", "Free");
+                memory.addBlocks(newBlock);
+
+                b.setAvailableSize(0);
+                b.setName(c.getName());
+                b.setState();
+
+                printFragmentations();
+            } else {
+                System.out.print("OUT(" + c.getName() + ") -> ");
+                for (int j = 0; j < memory.partitions.size(); j++) {
+                    Block b = memory.partitions.get(j);
+                    if (b.getState().equals("Free")) {
+                        continue;
+                    } else {
+                        if (!b.getName().equals(c.getName())) {
+                            continue;
+
+                        } else {
+                            b.setAvailableSize(c.getSize());
                             b.setName("None");
                             b.setState();
                             break;
